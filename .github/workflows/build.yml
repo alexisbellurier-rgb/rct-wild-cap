@@ -22,9 +22,22 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Fix build.gradle
+      - name: Write settings.gradle
         run: |
-          cat > build.gradle << 'GRADLE'
+          cat > settings.gradle << 'EOF'
+          pluginManagement {
+              repositories {
+                  maven { url 'https://maven.fabricmc.net/' }
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          rootProject.name = "rct-wild-cap"
+          EOF
+
+      - name: Write build.gradle
+        run: |
+          cat > build.gradle << 'EOF'
           plugins {
               id 'fabric-loom' version '1.7-SNAPSHOT'
           }
@@ -60,7 +73,7 @@ jobs:
               sourceCompatibility = JavaVersion.VERSION_21
               targetCompatibility = JavaVersion.VERSION_21
           }
-          GRADLE
+          EOF
 
       - name: Build
         run: gradle build
