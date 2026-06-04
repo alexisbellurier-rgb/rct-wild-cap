@@ -38,6 +38,19 @@ jobs:
           rootProject.name = "rct-wild-cap"
           EOF
 
+      - name: Write gradle.properties
+        run: |
+          cat > gradle.properties << 'EOF'
+          org.gradle.jvmargs=-Xmx2G
+          minecraft_version=1.21.1
+          yarn_mappings=1.21.1+build.3
+          loader_version=0.16.5
+          fabric_version=0.102.0+1.21.1
+          mod_version=1.0.0
+          maven_group=com.rctWildCap
+          archives_base_name=rct-wild-cap
+          EOF
+
       - name: Write build.gradle
         run: |
           cat > build.gradle << 'EOF'
