@@ -28,7 +28,7 @@ jobs:
       - name: Download Cobblemon
         run: |
           mkdir -p libs
-          curl -L "https://cdn.modrinth.com/data/MdwFAVRL/versions/s64m1opn/Cobblemon-fabric-1.7.3%2B1.21.1.jar" -o libs/cobblemon.jar
+          curl -L "https://cdn.modrinth.com/data/MdwFAVRL/versions/kF7CvxTo/Cobblemon-fabric-1.7.3%2B1.21.1.jar" -o libs/cobblemon.jar
           ls -lh libs/
 
       - name: Create directories
