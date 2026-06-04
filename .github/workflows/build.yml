@@ -25,6 +25,12 @@ jobs:
           unzip -q /tmp/gradle.zip -d /opt/gradle
           echo "/opt/gradle/gradle-8.8/bin" >> $GITHUB_PATH
 
+      - name: Download Cobblemon
+        run: |
+          mkdir -p libs
+          curl -L "https://cdn.modrinth.com/data/MdwFAVRL/versions/s64m1opn/Cobblemon-fabric-1.7.3%2B1.21.1.jar" -o libs/cobblemon.jar
+          ls -lh libs/
+
       - name: Create directories
         run: |
           mkdir -p src/main/resources
@@ -179,16 +185,16 @@ jobs:
               mavenCentral()
               maven { url "https://maven.fabricmc.net/" }
           }
-          loom {
-              mixin {
-                  useLegacyMixinAp = true
-              }
+          configurations {
+              cobblemonLib
           }
           dependencies {
               minecraft "com.mojang:minecraft:${project.minecraft_version}"
               mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
               modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
               modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+              cobblemonLib fileTree(dir: 'libs', include: ['*.jar'])
+              compileOnly fileTree(dir: 'libs', include: ['*.jar'])
           }
           processResources {
               inputs.property "version", project.version
@@ -197,7 +203,6 @@ jobs:
           }
           tasks.withType(JavaCompile).configureEach {
               it.options.release = 21
-              it.options.compilerArgs += ["-Amixin.checks.interfaces=false"]
           }
           java {
               withSourcesJar()
