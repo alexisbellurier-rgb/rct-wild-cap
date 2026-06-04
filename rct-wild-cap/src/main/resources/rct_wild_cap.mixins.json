@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.rctWildCap.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "PokemonSpawnActionMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
