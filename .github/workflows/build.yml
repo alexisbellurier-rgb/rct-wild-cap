@@ -63,8 +63,11 @@ jobs:
           import org.spongepowered.asm.mixin.injection.At;
           import org.spongepowered.asm.mixin.injection.Inject;
           import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+          import java.util.ArrayList;
           import java.util.List;
           import java.util.Optional;
+          import java.util.regex.Matcher;
+          import java.util.regex.Pattern;
           @Mixin(targets = "com.cobblemon.mod.common.api.spawning.detail.PokemonSpawnAction", remap = false)
           public abstract class PokemonSpawnActionMixin {
               @Inject(method = "createEntity()Lcom/cobblemon/mod/common/entity/pokemon/PokemonEntity;", at = @At("HEAD"), cancellable = true, remap = false)
@@ -78,11 +81,14 @@ jobs:
                       if (levelRange == null) return;
                       int spawnLevelMax = (int) levelRange.getClass().getMethod("getLast").invoke(levelRange);
                       Object blockPos = spawnablePos.getClass().getMethod("getPosition").invoke(spawnablePos);
-                      String posStr = blockPos.toString().replaceAll("[^0-9,\\-]", "");
-                      String[] parts = posStr.split(",");
-                      int bx = Integer.parseInt(parts[0].trim());
-                      int by = Integer.parseInt(parts[1].trim());
-                      int bz = Integer.parseInt(parts[2].trim());
+                      String posStr = blockPos.toString();
+                      Matcher matcher = Pattern.compile("-?\\d+").matcher(posStr);
+                      List<Integer> nums = new ArrayList<>();
+                      while (matcher.find()) nums.add(Integer.parseInt(matcher.group()));
+                      if (nums.size() < 3) return;
+                      int bx = nums.get(nums.size() - 3);
+                      int by = nums.get(nums.size() - 2);
+                      int bz = nums.get(nums.size() - 1);
                       Vec3d spawnPos = new Vec3d(bx, by, bz);
                       List<ServerPlayerEntity> players = serverWorld.getPlayers();
                       if (players.isEmpty()) return;
