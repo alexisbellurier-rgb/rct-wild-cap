@@ -31,6 +31,11 @@ jobs:
           curl -L "https://cdn.modrinth.com/data/MdwFAVRL/versions/s64m1opn/Cobblemon-fabric-1.7.3%2B1.21.1.jar" -o libs/cobblemon.jar
           ls -lh libs/
 
+      - name: Create directories
+        run: |
+          mkdir -p src/main/resources
+          mkdir -p src/main/java/com/rctWildCap/mixin
+
       - name: Fix fabric.mod.json
         run: |
           cat > src/main/resources/fabric.mod.json << 'EOF'
