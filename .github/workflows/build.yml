@@ -54,6 +54,23 @@ jobs:
           }
           EOF
 
+      - name: Fix mixins json
+        run: |
+          cat > src/main/resources/rct_wild_cap.mixins.json << 'EOF'
+          {
+            "required": true,
+            "minVersion": "0.8",
+            "package": "com.rctWildCap.mixin",
+            "compatibilityLevel": "JAVA_21",
+            "mixins": [
+              "PokemonSpawnActionMixin"
+            ],
+            "injectors": {
+              "defaultRequire": 1
+            }
+          }
+          EOF
+
       - name: Write settings.gradle
         run: |
           cat > settings.gradle << 'EOF'
