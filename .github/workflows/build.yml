@@ -28,8 +28,32 @@ jobs:
       - name: Download deps
         run: |
           mkdir -p libs
-          curl -L "https://cdn.modrinth.com/data/MdwFAVRL/versions/v77SHSXW/Cobblemon-fabric-1.6.1%2B1.21.1.jar" -o libs/cobblemon.jar
+          curl -L "https://cdn.modrinth.com/data/MdwFAVRL/versions/s64m1opn/Cobblemon-fabric-1.7.3%2B1.21.1.jar" -o libs/cobblemon.jar
           ls -lh libs/
+
+      - name: Fix fabric.mod.json
+        run: |
+          cat > src/main/resources/fabric.mod.json << 'EOF'
+          {
+            "schemaVersion": 1,
+            "id": "rct_wild_cap",
+            "version": "${version}",
+            "name": "RCT Wild Level Cap",
+            "description": "Empêche les Pokémon sauvages de spawner au-dessus du level cap RCT.",
+            "authors": ["vous"],
+            "license": "MIT",
+            "environment": "*",
+            "entrypoints": {
+              "main": ["com.rctWildCap.RctWildCapMod"]
+            },
+            "mixins": ["rct_wild_cap.mixins.json"],
+            "depends": {
+              "fabricloader": ">=0.16.5",
+              "fabric-api": "*",
+              "minecraft": "~1.21.1"
+            }
+          }
+          EOF
 
       - name: Write settings.gradle
         run: |
