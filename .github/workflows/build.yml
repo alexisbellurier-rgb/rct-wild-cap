@@ -78,9 +78,11 @@ jobs:
                       if (levelRange == null) return;
                       int spawnLevelMax = (int) levelRange.getClass().getMethod("getLast").invoke(levelRange);
                       Object blockPos = spawnablePos.getClass().getMethod("getPosition").invoke(spawnablePos);
-                      int bx = (int) blockPos.getClass().getMethod("getX").invoke(blockPos);
-                      int by = (int) blockPos.getClass().getMethod("getY").invoke(blockPos);
-                      int bz = (int) blockPos.getClass().getMethod("getZ").invoke(blockPos);
+                      String posStr = blockPos.toString().replaceAll("[^0-9,\\-]", "");
+                      String[] parts = posStr.split(",");
+                      int bx = Integer.parseInt(parts[0].trim());
+                      int by = Integer.parseInt(parts[1].trim());
+                      int bz = Integer.parseInt(parts[2].trim());
                       Vec3d spawnPos = new Vec3d(bx, by, bz);
                       List<ServerPlayerEntity> players = serverWorld.getPlayers();
                       if (players.isEmpty()) return;
