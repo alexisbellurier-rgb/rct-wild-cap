@@ -25,6 +25,12 @@ jobs:
           unzip -q /tmp/gradle.zip -d /opt/gradle
           echo "/opt/gradle/gradle-8.8/bin" >> $GITHUB_PATH
 
+      - name: Download deps
+        run: |
+          mkdir -p libs
+          curl -L "https://cdn.modrinth.com/data/MdwFAVRL/versions/qQkr9Wdi/Cobblemon-fabric-1.6.1+1.21.1.jar" -o libs/cobblemon.jar
+          curl -L "https://cdn.modrinth.com/data/rctapi/versions/latest/rctapi-fabric-1.21.1-0.10.6-beta.jar" -o libs/rctapi.jar
+
       - name: Write settings.gradle
         run: |
           cat > settings.gradle << 'EOF'
@@ -63,20 +69,13 @@ jobs:
           repositories {
               mavenCentral()
               maven { url "https://maven.fabricmc.net/" }
-              exclusiveContent {
-                  forRepository {
-                      maven { name = "Modrinth"; url = "https://api.modrinth.com/maven" }
-                  }
-                  filter { includeGroup "maven.modrinth" }
-              }
           }
           dependencies {
               minecraft "com.mojang:minecraft:${project.minecraft_version}"
               mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
               modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
               modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-              modCompileOnly "maven.modrinth:cobblemon:1.6.1+1.21.1"
-              modCompileOnly "maven.modrinth:rctapi:0.10.6-beta"
+              modCompileOnly fileTree(dir: 'libs', include: ['*.jar'])
           }
           processResources {
               inputs.property "version", project.version
