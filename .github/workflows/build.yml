@@ -95,11 +95,11 @@ jobs:
                       Object playerData = trainerManager.getClass().getMethod("getData", ServerPlayerEntity.class).invoke(trainerManager, nearest);
                       int levelCap = (int) playerData.getClass().getMethod("getLevelCap").invoke(playerData);
                       if (spawnLevelMax >= levelCap) {
-                          RctWildCapMod.LOGGER.debug("[RCT Wild Cap] Spawn bloqué — niveau {} >= cap {} ({})", spawnLevelMax, levelCap, nearest.getName().getString());
+                          RctWildCapMod.LOGGER.info("[RCT Wild Cap] Spawn bloqué — niveau {} >= cap {} ({})", spawnLevelMax, levelCap, nearest.getName().getString());
                           cir.setReturnValue(null);
                       }
                   } catch (Exception e) {
-                      RctWildCapMod.LOGGER.debug("[RCT Wild Cap] Erreur: {}", e.getMessage());
+                      RctWildCapMod.LOGGER.info("[RCT Wild Cap] Erreur: {}", e.getMessage());
                   }
               }
           }
