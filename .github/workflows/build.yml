@@ -97,10 +97,13 @@ jobs:
                           .min((a, b) -> Double.compare(a.getPos().squaredDistanceTo(spawnPos), b.getPos().squaredDistanceTo(spawnPos)));
                       if (nearestOpt.isEmpty()) return;
                       ServerPlayerEntity nearest = nearestOpt.get();
-                      Class<?> rctApiClass = Class.forName("com.gitlab.srcmc.rctmod.api.RctApi");
-                      Object trainerManager = rctApiClass.getMethod("getTrainerManager").invoke(null);
+                      Class<?> rctModClass = Class.forName("com.gitlab.srcmc.rctmod.api.RCTMod");
+                      Object rctModInstance = rctModClass.getMethod("getInstance").invoke(null);
+                      if (rctModInstance == null) return;
+                      Object trainerManager = rctModClass.getMethod("getTrainerManager").invoke(rctModInstance);
                       if (trainerManager == null) return;
-                      Object playerData = trainerManager.getClass().getMethod("getData", ServerPlayerEntity.class).invoke(trainerManager, nearest);
+                      Object playerData = trainerManager.getClass().getMethod("getData", net.minecraft.class_1657.class).invoke(trainerManager, nearest);
+                      if (playerData == null) return;
                       int levelCap = (int) playerData.getClass().getMethod("getLevelCap").invoke(playerData);
                       if (spawnLevelMax >= levelCap) {
                           RctWildCapMod.LOGGER.info("[RCT Wild Cap] Spawn bloqué — niveau {} >= cap {} ({})", spawnLevelMax, levelCap, nearest.getName().getString());
