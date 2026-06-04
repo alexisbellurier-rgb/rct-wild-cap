@@ -179,6 +179,11 @@ jobs:
               mavenCentral()
               maven { url "https://maven.fabricmc.net/" }
           }
+          loom {
+              mixin {
+                  useLegacyMixinAp = true
+              }
+          }
           dependencies {
               minecraft "com.mojang:minecraft:${project.minecraft_version}"
               mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
@@ -192,6 +197,7 @@ jobs:
           }
           tasks.withType(JavaCompile).configureEach {
               it.options.release = 21
+              it.options.compilerArgs += ["-Amixin.checks.interfaces=false"]
           }
           java {
               withSourcesJar()
