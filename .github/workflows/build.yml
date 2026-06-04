@@ -63,6 +63,7 @@ jobs:
           import org.spongepowered.asm.mixin.injection.At;
           import org.spongepowered.asm.mixin.injection.Inject;
           import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+          import java.lang.reflect.Method;
           import java.util.ArrayList;
           import java.util.List;
           import java.util.Optional;
@@ -102,7 +103,16 @@ jobs:
                       if (rctModInstance == null) return;
                       Object trainerManager = rctModClass.getMethod("getTrainerManager").invoke(rctModInstance);
                       if (trainerManager == null) return;
-                      Object playerData = trainerManager.getClass().getMethod("getData", net.minecraft.class_1657.class).invoke(trainerManager, nearest);
+                      Method getDataMethod = null;
+                      for (Method m : trainerManager.getClass().getMethods()) {
+                          if (m.getName().equals("getData") && m.getParameterCount() == 1
+                              && m.getParameterTypes()[0].isAssignableFrom(nearest.getClass())) {
+                              getDataMethod = m;
+                              break;
+                          }
+                      }
+                      if (getDataMethod == null) return;
+                      Object playerData = getDataMethod.invoke(trainerManager, nearest);
                       if (playerData == null) return;
                       int levelCap = (int) playerData.getClass().getMethod("getLevelCap").invoke(playerData);
                       if (spawnLevelMax >= levelCap) {
