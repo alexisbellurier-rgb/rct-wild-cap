@@ -72,48 +72,45 @@ jobs:
               @Inject(method = "run()Lcom/cobblemon/mod/common/api/spawning/detail/EntitySpawnResult;", at = @At("RETURN"), remap = false)
               private void rctWildCap_checkAfterSpawn(CallbackInfoReturnable<?> cir) {
                   try {
-                      // Récupérer l'observable entity via getEntity()
-                      Object entityObservable = this.getClass().getMethod("getEntity").invoke(this);
-                      if (entityObservable == null) return;
-                      // SimpleObservable contient la valeur via get()
-                      Object entityObj = entityObservable.getClass().getMethod("get").invoke(entityObservable);
-                      if (!(entityObj instanceof Entity entity)) return;
-                      if (!(entity.getWorld() instanceof ServerWorld serverWorld)) return;
-                      // Lire le niveau du Pokémon via getPokemon().getLevel()
-                      Object pokemon = entity.getClass().getMethod("getPokemon").invoke(entity);
-                      if (pokemon == null) return;
-                      int actualLevel = (int) pokemon.getClass().getMethod("getLevel").invoke(pokemon);
-                      // Joueur le plus proche dans 128 blocs
-                      Vec3d spawnPos = entity.getPos();
-                      List<ServerPlayerEntity> players = serverWorld.getPlayers();
-                      if (players.isEmpty()) return;
-                      Optional<ServerPlayerEntity> nearestOpt = players.stream()
-                          .filter(p -> p.getPos().squaredDistanceTo(spawnPos) <= 128.0 * 128.0)
-                          .min((a, b) -> Double.compare(a.getPos().squaredDistanceTo(spawnPos), b.getPos().squaredDistanceTo(spawnPos)));
-                      if (nearestOpt.isEmpty()) return;
-                      ServerPlayerEntity nearest = nearestOpt.get();
-                      // Level cap RCT
-                      Class<?> rctModClass = Class.forName("com.gitlab.srcmc.rctmod.api.RCTMod");
-                      Object rctModInstance = rctModClass.getMethod("getInstance").invoke(null);
-                      if (rctModInstance == null) return;
-                      Object trainerManager = rctModClass.getMethod("getTrainerManager").invoke(rctModInstance);
-                      if (trainerManager == null) return;
-                      Method getDataMethod = null;
-                      for (Method m : trainerManager.getClass().getMethods()) {
-                          if (m.getName().equals("getData") && m.getParameterCount() == 1
-                              && m.getParameterTypes()[0].isAssignableFrom(nearest.getClass())) {
-                              getDataMethod = m;
-                              break;
+                      Object spawnResult = cir.getReturnValue();
+                      if (spawnResult == null) return;
+                      List<?> entities = (List<?>) spawnResult.getClass().getMethod("getEntities").invoke(spawnResult);
+                      if (entities == null || entities.isEmpty()) return;
+                      for (Object entityObj : entities) {
+                          if (!(entityObj instanceof Entity entity)) continue;
+                          if (!(entity.getWorld() instanceof ServerWorld serverWorld)) continue;
+                          Object pokemon = entity.getClass().getMethod("getPokemon").invoke(entity);
+                          if (pokemon == null) continue;
+                          int actualLevel = (int) pokemon.getClass().getMethod("getLevel").invoke(pokemon);
+                          Vec3d spawnPos = entity.getPos();
+                          List<ServerPlayerEntity> players = serverWorld.getPlayers();
+                          if (players.isEmpty()) continue;
+                          Optional<ServerPlayerEntity> nearestOpt = players.stream()
+                              .filter(p -> p.getPos().squaredDistanceTo(spawnPos) <= 128.0 * 128.0)
+                              .min((a, b) -> Double.compare(a.getPos().squaredDistanceTo(spawnPos), b.getPos().squaredDistanceTo(spawnPos)));
+                          if (nearestOpt.isEmpty()) continue;
+                          ServerPlayerEntity nearest = nearestOpt.get();
+                          Class<?> rctModClass = Class.forName("com.gitlab.srcmc.rctmod.api.RCTMod");
+                          Object rctModInstance = rctModClass.getMethod("getInstance").invoke(null);
+                          if (rctModInstance == null) continue;
+                          Object trainerManager = rctModClass.getMethod("getTrainerManager").invoke(rctModInstance);
+                          if (trainerManager == null) continue;
+                          Method getDataMethod = null;
+                          for (Method m : trainerManager.getClass().getMethods()) {
+                              if (m.getName().equals("getData") && m.getParameterCount() == 1
+                                  && m.getParameterTypes()[0].isAssignableFrom(nearest.getClass())) {
+                                  getDataMethod = m;
+                                  break;
+                              }
                           }
-                      }
-                      if (getDataMethod == null) return;
-                      Object playerData = getDataMethod.invoke(trainerManager, nearest);
-                      if (playerData == null) return;
-                      int levelCap = (int) playerData.getClass().getMethod("getLevelCap").invoke(playerData);
-                      // Despawner si le niveau réel dépasse le cap
-                      if (actualLevel >= levelCap) {
-                          entity.discard();
-                          RctWildCapMod.LOGGER.info("[RCT Wild Cap] Despawn — niveau réel {} >= cap {} ({})", actualLevel, levelCap, nearest.getName().getString());
+                          if (getDataMethod == null) continue;
+                          Object playerData = getDataMethod.invoke(trainerManager, nearest);
+                          if (playerData == null) continue;
+                          int levelCap = (int) playerData.getClass().getMethod("getLevelCap").invoke(playerData);
+                          if (actualLevel >= levelCap) {
+                              entity.discard();
+                              RctWildCapMod.LOGGER.info("[RCT Wild Cap] Despawn — niveau {} >= cap {} ({})", actualLevel, levelCap, nearest.getName().getString());
+                          }
                       }
                   } catch (Exception e) {
                       RctWildCapMod.LOGGER.info("[RCT Wild Cap] Erreur: {}", e.getMessage());
