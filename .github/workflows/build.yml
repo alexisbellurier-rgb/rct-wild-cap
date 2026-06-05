@@ -56,6 +56,7 @@ jobs:
           cat > src/main/java/com/rctWildCap/mixin/PokemonSpawnActionMixin.java << 'EOF'
           package com.rctWildCap.mixin;
           import com.rctWildCap.RctWildCapMod;
+          import net.minecraft.entity.Entity;
           import net.minecraft.server.network.ServerPlayerEntity;
           import net.minecraft.server.world.ServerWorld;
           import net.minecraft.util.math.Vec3d;
@@ -64,33 +65,26 @@ jobs:
           import org.spongepowered.asm.mixin.injection.Inject;
           import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
           import java.lang.reflect.Method;
-          import java.util.ArrayList;
           import java.util.List;
           import java.util.Optional;
-          import java.util.regex.Matcher;
-          import java.util.regex.Pattern;
-          @Mixin(targets = "com.cobblemon.mod.common.api.spawning.detail.PokemonSpawnAction", remap = false)
+          @Mixin(targets = "com.cobblemon.mod.common.api.spawning.detail.SingleEntitySpawnAction", remap = false)
           public abstract class PokemonSpawnActionMixin {
-              @Inject(method = "createEntity()Lcom/cobblemon/mod/common/entity/pokemon/PokemonEntity;", at = @At("HEAD"), cancellable = true, remap = false)
-              private void rctWildCap_checkLevelCap(CallbackInfoReturnable<?> cir) {
+              @Inject(method = "run()Lcom/cobblemon/mod/common/api/spawning/detail/EntitySpawnResult;", at = @At("RETURN"), remap = false)
+              private void rctWildCap_checkAfterSpawn(CallbackInfoReturnable<?> cir) {
                   try {
-                      Object spawnablePos = this.getClass().getMethod("getSpawnablePosition").invoke(this);
-                      if (spawnablePos == null) return;
-                      Object world = spawnablePos.getClass().getMethod("getWorld").invoke(spawnablePos);
-                      if (!(world instanceof ServerWorld serverWorld)) return;
-                      Object levelRange = this.getClass().getMethod("getLevelRange").invoke(this);
-                      if (levelRange == null) return;
-                      int spawnLevelMax = (int) levelRange.getClass().getMethod("getLast").invoke(levelRange);
-                      Object blockPos = spawnablePos.getClass().getMethod("getPosition").invoke(spawnablePos);
-                      String posStr = blockPos.toString();
-                      Matcher matcher = Pattern.compile("-?\\d+").matcher(posStr);
-                      List<Integer> nums = new ArrayList<>();
-                      while (matcher.find()) nums.add(Integer.parseInt(matcher.group()));
-                      if (nums.size() < 3) return;
-                      int bx = nums.get(nums.size() - 3);
-                      int by = nums.get(nums.size() - 2);
-                      int bz = nums.get(nums.size() - 1);
-                      Vec3d spawnPos = new Vec3d(bx, by, bz);
+                      // Récupérer l'observable entity via getEntity()
+                      Object entityObservable = this.getClass().getMethod("getEntity").invoke(this);
+                      if (entityObservable == null) return;
+                      // SimpleObservable contient la valeur via get()
+                      Object entityObj = entityObservable.getClass().getMethod("get").invoke(entityObservable);
+                      if (!(entityObj instanceof Entity entity)) return;
+                      if (!(entity.getWorld() instanceof ServerWorld serverWorld)) return;
+                      // Lire le niveau du Pokémon via getPokemon().getLevel()
+                      Object pokemon = entity.getClass().getMethod("getPokemon").invoke(entity);
+                      if (pokemon == null) return;
+                      int actualLevel = (int) pokemon.getClass().getMethod("getLevel").invoke(pokemon);
+                      // Joueur le plus proche dans 128 blocs
+                      Vec3d spawnPos = entity.getPos();
                       List<ServerPlayerEntity> players = serverWorld.getPlayers();
                       if (players.isEmpty()) return;
                       Optional<ServerPlayerEntity> nearestOpt = players.stream()
@@ -98,6 +92,7 @@ jobs:
                           .min((a, b) -> Double.compare(a.getPos().squaredDistanceTo(spawnPos), b.getPos().squaredDistanceTo(spawnPos)));
                       if (nearestOpt.isEmpty()) return;
                       ServerPlayerEntity nearest = nearestOpt.get();
+                      // Level cap RCT
                       Class<?> rctModClass = Class.forName("com.gitlab.srcmc.rctmod.api.RCTMod");
                       Object rctModInstance = rctModClass.getMethod("getInstance").invoke(null);
                       if (rctModInstance == null) return;
@@ -115,9 +110,10 @@ jobs:
                       Object playerData = getDataMethod.invoke(trainerManager, nearest);
                       if (playerData == null) return;
                       int levelCap = (int) playerData.getClass().getMethod("getLevelCap").invoke(playerData);
-                      if (spawnLevelMax >= levelCap) {
-                          RctWildCapMod.LOGGER.info("[RCT Wild Cap] Spawn bloqué — niveau {} >= cap {} ({})", spawnLevelMax, levelCap, nearest.getName().getString());
-                          cir.setReturnValue(null);
+                      // Despawner si le niveau réel dépasse le cap
+                      if (actualLevel >= levelCap) {
+                          entity.discard();
+                          RctWildCapMod.LOGGER.info("[RCT Wild Cap] Despawn — niveau réel {} >= cap {} ({})", actualLevel, levelCap, nearest.getName().getString());
                       }
                   } catch (Exception e) {
                       RctWildCapMod.LOGGER.info("[RCT Wild Cap] Erreur: {}", e.getMessage());
