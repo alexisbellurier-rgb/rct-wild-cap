@@ -117,22 +117,21 @@ jobs:
                       Object playerData = getDataMethod.invoke(trainerManager, nearest);
                       if (playerData == null) return;
                       int levelCap = (int) playerData.getClass().getMethod("getLevelCap").invoke(playerData);
-                      // Si le min est déjà >= cap, annuler complètement le spawn
-                      if (levelMin >= levelCap) {
+                      // Si le min est déjà > cap, annuler complètement le spawn
+                      if (levelMin > levelCap) {
                           cir.setReturnValue(null);
-                          RctWildCapMod.LOGGER.info("[RCT Wild Cap] Spawn annulé — min {} >= cap {} ({})", levelMin, levelCap, nearest.getName().getString());
+                          RctWildCapMod.LOGGER.debug("[RCT Wild Cap] Spawn annulé — min {} > cap {} ({})", levelMin, levelCap, nearest.getName().getString());
                           return;
                       }
-                      // Si seulement le max dépasse le cap, plafonner la plage
-                      if (levelMax >= levelCap) {
-                          int newMax = levelCap - 1;
+                      // Si le max dépasse le cap, plafonner la plage au cap
+                      if (levelMax > levelCap) {
                           Constructor<?> intRangeCtor = Class.forName("kotlin.ranges.IntRange").getConstructor(int.class, int.class);
-                          Object newRange = intRangeCtor.newInstance(levelMin, newMax);
+                          Object newRange = intRangeCtor.newInstance(levelMin, levelCap);
                           this.getClass().getMethod("setLevelRange", Class.forName("kotlin.ranges.IntRange")).invoke(this, newRange);
-                          RctWildCapMod.LOGGER.info("[RCT Wild Cap] Plage ajustée {}-{} -> {}-{} (cap {} pour {})", levelMin, levelMax, levelMin, newMax, levelCap, nearest.getName().getString());
+                          RctWildCapMod.LOGGER.debug("[RCT Wild Cap] Plage ajustée {}-{} -> {}-{} (cap {} pour {})", levelMin, levelMax, levelMin, levelCap, levelCap, nearest.getName().getString());
                       }
                   } catch (Exception e) {
-                      RctWildCapMod.LOGGER.info("[RCT Wild Cap] Erreur: {}", e.getMessage());
+                      RctWildCapMod.LOGGER.debug("[RCT Wild Cap] Erreur: {}", e.getMessage());
                   }
               }
           }
