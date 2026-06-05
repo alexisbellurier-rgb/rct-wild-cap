@@ -48,7 +48,7 @@ jobs:
               public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
               @Override
               public void onInitialize() {
-                  LOGGER.info("[Wild Level Cap] Mod initialisé.");
+                  LOGGER.info("[Wild Level Cap] Mod initialized.");
               }
           }
           EOF
@@ -119,17 +119,17 @@ jobs:
                       int levelCap = (int) playerData.getClass().getMethod("getLevelCap").invoke(playerData);
                       if (levelMin > levelCap) {
                           cir.setReturnValue(null);
-                          RctWildCapMod.LOGGER.debug("[Wild Level Cap] Spawn annulé — min {} > cap {} ({})", levelMin, levelCap, nearest.getName().getString());
+                          RctWildCapMod.LOGGER.debug("[Wild Level Cap] Spawn cancelled — min {} > cap {} ({})", levelMin, levelCap, nearest.getName().getString());
                           return;
                       }
                       if (levelMax > levelCap) {
                           Constructor<?> intRangeCtor = Class.forName("kotlin.ranges.IntRange").getConstructor(int.class, int.class);
                           Object newRange = intRangeCtor.newInstance(levelMin, levelCap);
                           this.getClass().getMethod("setLevelRange", Class.forName("kotlin.ranges.IntRange")).invoke(this, newRange);
-                          RctWildCapMod.LOGGER.debug("[Wild Level Cap] Plage ajustée {}-{} -> {}-{} (cap {} pour {})", levelMin, levelMax, levelMin, levelCap, levelCap, nearest.getName().getString());
+                          RctWildCapMod.LOGGER.debug("[Wild Level Cap] Range clamped {}-{} -> {}-{} (cap {} for {})", levelMin, levelMax, levelMin, levelCap, levelCap, nearest.getName().getString());
                       }
                   } catch (Exception e) {
-                      RctWildCapMod.LOGGER.debug("[Wild Level Cap] Erreur: {}", e.getMessage());
+                      RctWildCapMod.LOGGER.debug("[Wild Level Cap] Error: {}", e.getMessage());
                   }
               }
           }
@@ -143,7 +143,7 @@ jobs:
             "id": "rct_wild_cap",
             "version": "${version}",
             "name": "Wild Level Cap for RCT",
-            "description": "Empêche les Pokémon sauvages de spawner au-dessus du level cap RCT du joueur. Par Ramsteak.",
+            "description": "Prevents wild Pokémon from spawning above the player's RCT level cap. By Ramsteak.",
             "authors": ["Ramsteak"],
             "license": "MIT",
             "environment": "*",
