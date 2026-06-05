@@ -72,7 +72,7 @@ jobs:
           import java.util.regex.Pattern;
           @Mixin(targets = "com.cobblemon.mod.common.api.spawning.detail.PokemonSpawnAction", remap = false)
           public abstract class PokemonSpawnActionMixin {
-              @Inject(method = "createEntity()Lcom/cobblemon/mod/common/entity/pokemon/PokemonEntity;", at = @At("HEAD"), remap = false)
+              @Inject(method = "createEntity()Lcom/cobblemon/mod/common/entity/pokemon/PokemonEntity;", at = @At("HEAD"), cancellable = true, remap = false)
               private void rctWildCap_clampLevelRange(CallbackInfoReturnable<?> cir) {
                   try {
                       Object spawnablePos = this.getClass().getMethod("getSpawnablePosition").invoke(this);
@@ -117,17 +117,19 @@ jobs:
                       Object playerData = getDataMethod.invoke(trainerManager, nearest);
                       if (playerData == null) return;
                       int levelCap = (int) playerData.getClass().getMethod("getLevelCap").invoke(playerData);
-                      // Si la plage max dépasse le cap, on la plafonne
+                      // Si le min est déjà >= cap, annuler complètement le spawn
+                      if (levelMin >= levelCap) {
+                          cir.setReturnValue(null);
+                          RctWildCapMod.LOGGER.info("[RCT Wild Cap] Spawn annulé — min {} >= cap {} ({})", levelMin, levelCap, nearest.getName().getString());
+                          return;
+                      }
+                      // Si seulement le max dépasse le cap, plafonner la plage
                       if (levelMax >= levelCap) {
-                          int newMax = Math.max(levelMin, levelCap - 1);
-                          // Créer un nouvel IntRange(levelMin, newMax)
-                          Constructor<?> intRangeCtor = Class.forName("kotlin.ranges.IntRange")
-                              .getConstructor(int.class, int.class);
+                          int newMax = levelCap - 1;
+                          Constructor<?> intRangeCtor = Class.forName("kotlin.ranges.IntRange").getConstructor(int.class, int.class);
                           Object newRange = intRangeCtor.newInstance(levelMin, newMax);
-                          this.getClass().getMethod("setLevelRange", Class.forName("kotlin.ranges.IntRange"))
-                              .invoke(this, newRange);
-                          RctWildCapMod.LOGGER.info("[RCT Wild Cap] Plage ajustée {}-{} -> {}-{} (cap {} pour {})",
-                              levelMin, levelMax, levelMin, newMax, levelCap, nearest.getName().getString());
+                          this.getClass().getMethod("setLevelRange", Class.forName("kotlin.ranges.IntRange")).invoke(this, newRange);
+                          RctWildCapMod.LOGGER.info("[RCT Wild Cap] Plage ajustée {}-{} -> {}-{} (cap {} pour {})", levelMin, levelMax, levelMin, newMax, levelCap, nearest.getName().getString());
                       }
                   } catch (Exception e) {
                       RctWildCapMod.LOGGER.info("[RCT Wild Cap] Erreur: {}", e.getMessage());
